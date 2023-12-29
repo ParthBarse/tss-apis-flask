@@ -254,6 +254,11 @@ def upload_files():
 
 # -------------------------------------------     Chat Module      ---------------------------------------------------------
 from datetime import date
+from datetime import datetime
+from werkzeug.utils import secure_filename
+import random
+from datetime import date
+from datetime import datetime
 
 @app.route("/createticket", methods=["POST"])
 def createticket():
