@@ -233,15 +233,15 @@ def upload_files():
     if 'files' not in request.files:
         return jsonify({'error': 'No files provided'}), 400
 
-    files = request.files.get('files')
+    files = request.files.getlist('files')  # Use getlist for multiple files
     file_urls = []
 
     for file in files:
         if file and allowed_file(file.filename.decode('utf-8')):
             # Generate a unique filename using UUID hex
             filename = str(uuid.uuid4().hex) + os.path.splitext(file.filename.decode('utf-8'))[1]
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename.decode('utf-8'))
-            file.save(file_path)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)  # Use save on request.files, not on individual file object
             file_url = f'http://64.227.186.165/tss_files/All_Files/{filename}'
             file_urls.append(file_url)
 
