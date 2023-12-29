@@ -246,9 +246,90 @@ def upload_files():
             file_urls.append(file_url)
 
     return jsonify({'file_urls': file_urls}), 200
+
+
+
+
+@app.route('/addProducts_inventory', methods=['POST'])
+def addProducts_inventory():
+    try:
+        import uuid
+        collection = db['products_inventory']
+        data = request.get_json()  # Use get_json() instead of request.json
+
+        # Check if data is a valid dictionary
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Invalid JSON format. Expected a dictionary.',"success":False}), 400
+        
+        pid = uuid.uuid4().hex
+
+        data['pid'] = pid
+
+        # Save the modified data to MongoDB
+        collection.insert_one(data)
+
+        return jsonify({'message': 'Data stored successfully.',"success":True}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e),"success":False}), 500
     
 
 
+
+@app.route('/editProduct', methods=['PUT'])
+def edit_product():
+    try:
+        import uuid
+        collection = db['products_inventory']
+        data = request.get_json()
+
+        # # Check if data is a valid dictionary
+        # if not isinstance(data, dict):
+        #     return jsonify({'error': 'Invalid JSON format. Expected a dictionary.', "success": False}), 400
+
+        # Extracting common information
+        pid = data.get('pid')
+        if pid is None:
+            return jsonify({'error': 'Missing "pid" parameter in the request data.', "success": False}), 400
+
+        # Update the student's resume data in MongoDB
+        result = collection.update_one({'pid': pid}, {'$set': data})
+
+        # Check if the update was successful
+        if result.modified_count > 0:
+            return jsonify({'message': 'Data updated successfully.', "success": True}), 200
+        else:
+            return jsonify({'error': 'No document found for the provided pid.', "success": False}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e), "success": False}), 500
+    
+
+    
+
+@app.route('/getAllProducts', methods=['GET'])
+def get_all_students_resume():
+    try:
+        collection = db['products_inventory']
+        # Retrieve all students' resumes from MongoDB
+        all_resumes = list(collection.find({}, {'_id': 0}))
+        return jsonify({'resumes': all_resumes, "success":True}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e),"success":False}), 500
+    
+
+@app.route('/getProduct', methods=['GET'])
+def get_product():
+    try:
+        collection = db['products_inventory']
+        pid = request.args.get("pid")
+        # Retrieve all students' resumes from MongoDB
+        resume = collection.find_one({"pid":pid}, {'_id': 0})
+        return jsonify({'resume': resume,"success":True}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e),"success":False}), 500
 
 
 
