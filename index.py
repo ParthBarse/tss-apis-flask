@@ -237,10 +237,10 @@ def upload_files():
     file_urls = []
 
     for file in files:
-        if file and allowed_file(file.filename):
+        if file and allowed_file(file.filename.decode('utf-8')):
             # Generate a unique filename using UUID hex
-            filename = str(uuid.uuid4().hex) + os.path.splitext(file.filename)[1]
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            filename = str(uuid.uuid4().hex) + os.path.splitext(file.filename.decode('utf-8'))[1]
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename.decode('utf-8'))
             file.save(file_path)
             file_url = f'http://64.227.186.165/tss_files/All_Files/{filename}'
             file_urls.append(file_url)
