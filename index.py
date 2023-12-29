@@ -290,7 +290,7 @@ def createticket():
         else:
             return json.dumps({'success': False, "error": "Ticket already exist"}), 200, {'ContentType': 'application/json'}
     except Exception as e:
-        return json.dumps({'success': False, "error": e}), 200, {'ContentType': 'application/json'}
+        return json.dumps({'success': False, "error": str(e)}), 200, {'ContentType': 'application/json'}
 
 
 @app.route("/getticket", methods=["GET", "POST"])
