@@ -217,6 +217,37 @@ def update_student():
         return jsonify({"error": str(e)}), 500  # Internal Server Error
     
 
+#-----------------------------------------------------------------------------------
+    
+UPLOAD_FOLDER = '/var/www/html/tss_files/All_Files'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+def upload_files():
+    # Check if the post request has the file part
+    if 'files[]' not in request.files:
+        return jsonify({'error': 'No files provided'}), 400
+
+    files = request.files.getlist('files[]')
+    file_urls = []
+
+    for file in files:
+        if file and allowed_file(file.filename):
+            # Generate a unique filename using UUID hex
+            filename = str(uuid.uuid4().hex) + os.path.splitext(file.filename)[1]
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            file_url = f'http://64.227.186.165/tss_files/All_Files/{filename}'
+            file_urls.append(file_url)
+
+    return jsonify({'file_urls': file_urls}), 200
+    
+
 
 
 
