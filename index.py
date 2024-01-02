@@ -232,10 +232,7 @@ def allowed_file(filename):
 
 from io import BytesIO
 def generate_unique_filename(file):
-    if isinstance(file, BytesIO):
-        ext = secure_filename(file.filename).rsplit('.', 1)[1].lower()
-    else:
-        ext = secure_filename(file.rsplit('.', 1)[1]).lower()
+    ext = secure_filename(file.filename).rsplit('.', 1)[1].lower()
     return str(uuid.uuid4()) + '.' + ext
 
 @app.route('/upload', methods=['POST'])
