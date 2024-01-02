@@ -233,7 +233,7 @@ def generate_unique_filename(filename):
 
 @app.route('/upload', methods=['POST'])
 def upload_files():
-    slider_photos = request.files.getlist('slider_photos')
+    slider_photos = request.files.getlist('files')
     if not slider_photos:
         return jsonify({"error":"Please send Files to Store."})
     
