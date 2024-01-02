@@ -227,25 +227,31 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def generate_unique_filename(filename):
+    ext = filename.rsplit('.', 1)[1].lower()
+    return str(uuid.uuid4()) + '.' + ext
+
 @app.route('/upload', methods=['POST'])
 def upload_files():
-    # Check if the post request has the file part
-    if 'files' not in request.files:
-        return jsonify({'error': 'No files provided'}), 400
+    slider_photos = request.files.getlist('slider_photos')
+    if not slider_photos:
+        return jsonify({"error":"Please send Files to Store."})
+    
+    slider_filenames = [generate_unique_filename(photo) for photo in slider_photos]
 
-    files = request.files.getlist('files')  # Use getlist for multiple files
-    file_urls = []
+    # for file in files:
+    #     if file and allowed_file(file.filename.decode('utf-8')):
+    #         # Generate a unique filename using UUID hex
+    #         filename = str(uuid.uuid4().hex) + os.path.splitext(file.filename.decode('utf-8'))[1]
+    #         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    #         file.save(file_path)  # Use save on request.files, not on individual file object
+    #         file_url = f'http://64.227.186.165/tss_files/All_Files/{filename}'
+    #         file_urls.append(file_url)
 
-    for file in files:
-        if file and allowed_file(file.filename.decode('utf-8')):
-            # Generate a unique filename using UUID hex
-            filename = str(uuid.uuid4().hex) + os.path.splitext(file.filename.decode('utf-8'))[1]
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)  # Use save on request.files, not on individual file object
-            file_url = f'http://64.227.186.165/tss_files/All_Files/{filename}'
-            file_urls.append(file_url)
+    for i, photo in enumerate(slider_photos):
+            slider_photos[i].save(os.path.join(UPLOAD_FOLDER, slider_filenames[i]))
 
-    return jsonify({'file_urls': file_urls}), 200
+    return jsonify({"urls": ["http://64.227.186.165/tss_files/All_Files/" + filename for filename in slider_filenames],}), 200
 
 
 
