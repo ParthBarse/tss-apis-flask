@@ -463,6 +463,42 @@ def closeticket():
     
 
 
+
+import geoip2.database
+def get_location_from_ip_local(ip):
+    database_path = 'GeoLite2-City.mmdb'
+    reader = geoip2.database.Reader(database_path)
+    try:
+        response = reader.city(ip)
+        city = response.city.name
+        region = response.subdivisions.most_specific.name
+        country = response.country.name
+        latitude = response.location.latitude
+        longitude = response.location.longitude
+        location = {"city":city, "region":region, "country":country, "latitude":latitude, "longitude":longitude}
+        return location
+    except geoip2.errors.AddressNotFoundError:
+        return "IP address not found in the database"
+    finally:
+        reader.close()
+    
+
+@app.route("/convertIPtoAddress", methods=["POST"])
+def closeticket():
+    try:
+        data = request.get_json()
+        ip = data['ip']
+        if ip:
+            ip_address = ip
+            location = get_location_from_ip_local(ip_address)
+            return json.dumps({'success': True, "address":location}), 200, {'ContentType': 'application/json'}
+        else:
+            return json.dumps({'success': False}), 200, {'ContentType': 'application/json'}
+    except Exception as e:
+        return json.dumps({'success': False, "error": e}), 200, {'ContentType': 'application/json'}
+    
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002)
 
