@@ -484,7 +484,7 @@ def get_location_from_ip_local(ip):
     
 
 @app.route("/convertIPtoAddress", methods=["POST"])
-def closeticket():
+def convertIPtoAddress():
     try:
         data = request.get_json()
         ip = data['ip']
