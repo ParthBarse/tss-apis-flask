@@ -2,7 +2,7 @@ from flask import Flask
 from flask_login import login_user
 from flask import request, session
 from pymongo import MongoClient
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
@@ -49,130 +49,6 @@ def home():
 
 
 # ------------------------------------------------------------------------------------------------------------
-
-
-@app.route("/getAllProject", methods=["GET"])
-def getAllStudents():
-    users = db["students_db"]
-    ans = []
-    ans = list(users.find({},{'_id':0}))
-    return jsonify({"students":ans})
-
-@app.route("/getInactiveStudents", methods=["GET"])
-def getInactiveStudents():
-    users = db["students_db"]
-    ans = []
-    ans = list(users.find({"status": {"$ne": "Active"}}, {"_id": 0}))
-    return jsonify({"students":ans})
-
-def calculate_age(dob):
-    try:
-        birth_date = datetime.strptime(dob, "%d-%m-%Y")
-        today = datetime.today()
-        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
-        return age
-    except ValueError:
-        raise ValueError("Invalid date of birth format. Please use 'dd-mm-yyyy'.")
-
-@app.route('/registerStudent', methods=['POST'])
-def register_student():
-    try:
-        data = request.form
-
-        # Check if email and phn are not repeating
-        students_db = db["students_db"]
-        existing_student_email = students_db.find_one({"email": data["email"]})
-        existing_student_phn = students_db.find_one({"phn": data["phn"]})
-
-        if existing_student_email:
-            raise ValueError(f"Email '{data['email']}' is already registered.")
-
-        if existing_student_phn:
-            raise ValueError(f"Phone number '{data['phn']}' is already registered.")
-
-        # Generate a unique ID for the student using UUID
-        sid = str(uuid.uuid4().hex)
-
-        # Calculate age based on the provided date of birth
-        age = calculate_age(data["dob"])
-        if age>=7 and age<=11 and data.get("gender") == "male":
-            company = "ALPHA"
-        elif age>=12 and age<=16 and data.get("gender") == "male":
-            company = "BRAVO"
-        elif age>=17 and age<=21 and data.get("gender") == "male":
-            company = "DELTA"
-        elif age>=7 and age<=11 and data.get("gender") == "female":
-            company = "CHARLEY"
-        elif age>=12 and age<=16 and data.get("gender") == "female":
-            company = "ECO"
-        elif age>=17 and age<=21 and data.get("gender") == "female":
-            company = "FOXFORD"
-        
-
-        student = {
-            "sid": sid,
-            "first_name": data["first_name"],
-            "middle_name": data.get("middle_name", ""),
-            "last_name": data["last_name"],
-            "parents_name": data.get("parents_name", ""),
-            "email": data["email"],
-            "phn": str(data["phn"]),
-            "parents_phn": data.get("parents_phn", ""),
-            "parents_email": data.get("parents_email", ""),
-            "dob": data["dob"],
-            "age": str(age),
-            "company":company,
-            "address": data["address"],
-            "fathers_occupation": data["fathers_occupation"],
-            "mothers_occupation": data["mothers_occupation"],
-            "how_you_got_to_know": data["how_you_got_to_know"],
-            "employee_who_reached_out_to_you": data["employee_who_reached_out_to_you"],
-            "district": data["district"],
-            "state": data["state"],
-            "pincode": str(data["pincode"]),
-            "status": "Active",
-            "camp_id": data.get("camp_id", ""),
-            "camp_category": data.get("camp_category", ""),
-            "batch_id": data.get("batch_id", ""),
-            "food_option": data.get("food_option", ""),
-            "dress_code": data.get("dress_code", ""),
-            "pick_up_point": data.get("pick_up_point", ""),
-            "height": data.get("height", ""),
-            "weight": data.get("weight", ""),
-            "blood_group": data.get("blood_group", ""),
-            "payment_option": data.get("payment_option", ""),
-            "school_name": data.get("school_name", ""),
-            "gender": data.get("gender", ""),
-            "standard": data.get("standard", ""),
-            "wp_no": data.get("wp_no", ""),
-            "medication_physical":data.get("medication_physical"),
-            "other_problem":data.get("other_problem"),
-            "physical_problem":data.get("physical_problem"),
-            "medication_allergy":data.get("medication_allegric"),
-            "medication_other":data.get("medication_other"),
-            "allergy":data.get("allergy"),
-            "payment_status": data.get("payment_status", "Pending")
-        }
-
-        # Store the student information in the MongoDB collection
-        batches_db = db["batches_db"]
-        batch = batches_db.find_one({"batch_id":data.get("batch_id")}, {"_id":0})
-        if batch:
-            if int(batch["students_registered"]) <= int(batch["batch_intake"]):
-                students_db.insert_one(student)
-                batches_db.update_one({"batch_id": data.get("batch_id")}, {"$set": {"students_registered":int(batch["students_registered"]+1)}})
-                return jsonify({"message": "Student registered successfully", "sid": sid})
-            else:
-                return jsonify({"message": "Batch is Already Full !"})
-
-        # return jsonify({"message": "Student registered successfully", "sid": sid})
-
-    except ValueError as ve:
-        return jsonify({"error": str(ve)}), 400  # Bad Request
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500  # Internal Server Error
-
 
 @app.route('/updateStudent', methods=['PUT'])
 def update_student():
@@ -496,6 +372,30 @@ def convertIPtoAddress():
             return json.dumps({'success': False}), 200, {'ContentType': 'application/json'}
     except Exception as e:
         return json.dumps({'success': False, "error": e}), 200, {'ContentType': 'application/json'}
+    
+# import pandas as pd
+# df = pd.read_excel('your_excel_file.xlsx')
+# json_data = df.to_json(orient='records')
+# with open('output.json', 'w') as f:
+#     f.write(json_data)
+    
+import pandas as pd
+@app.route("/exportProducts", methods=["GET"])
+def exportProducts():
+    try:
+        products = db['products']
+        all_products = products.find({})
+        df = pd.DataFrame(all_products)
+        df.to_excel('output.xlsx', index=False)
+        save_path = '/var/www/html/tss_files/All_Files/products_list.xlsx'
+        df.to_excel(save_path, index=False)
+        if os.path.exists(save_path):
+            return send_file(save_path, as_attachment=True)
+        else:
+            return "File could not be found at: {}".format(save_path)
+    except Exception as e:
+        return json.dumps({'success': False, "error": e}), 200, {'ContentType': 'application/json'}
+
     
 
 
