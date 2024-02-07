@@ -435,16 +435,17 @@ def importProducts():
             
             # Convert DataFrame back to dictionaries with nested structures
             records = []
-            for _, row in df.iterrows():
+            for idx, row in df.iterrows():
                 record = {}
                 for col, value in row.items():
-                    keys = col.split('_')
-                    temp = record
-                    for key in keys[:-1]:
-                        if key not in temp:
-                            temp[key] = {}
-                        temp = temp[key]
-                    temp[keys[-1]] = value
+                    if isinstance(col, str):  # Ensure the column name is a string
+                        keys = col.split('_')
+                        temp = record
+                        for key in keys[:-1]:
+                            if key not in temp:
+                                temp[key] = {}
+                            temp = temp[key]
+                        temp[keys[-1]] = value
                 records.append(record)
             
             products.insert_many(records)
