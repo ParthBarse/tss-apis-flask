@@ -386,7 +386,7 @@ import pandas as pd
 def exportProducts():
     try:
         products = db['products']
-        all_products = products.find({})
+        all_products = products.find({},{"_id":0})
         
         # Flatten nested structures
         all_products_flat = []
@@ -416,7 +416,43 @@ def exportProducts():
         return json.dumps({'success': False, "error": str(e)}), 200, {'ContentType': 'application/json'}
 
 
-    
+
+
+@app.route("/importProducts", methods=["POST"])
+def importProducts():
+    try:
+        if 'file' not in request.files:
+            return "No file part"
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return "No selected file"
+        
+        if file and file.filename.endswith('.xlsx'):
+            df = pd.read_excel(file)
+            products = db['products']
+            
+            # Convert DataFrame back to dictionaries with nested structures
+            records = []
+            for _, row in df.iterrows():
+                record = {}
+                for col, value in row.items():
+                    keys = col.split('_')
+                    temp = record
+                    for key in keys[:-1]:
+                        if key not in temp:
+                            temp[key] = {}
+                        temp = temp[key]
+                    temp[keys[-1]] = value
+                records.append(record)
+            
+            products.insert_many(records)
+            return "File successfully imported and added to the database"
+        else:
+            return "File format not supported. Please upload an Excel file (.xlsx)"
+    except Exception as e:
+        return jsonify({'success': False, "error": str(e)}), 200
 
 
 if __name__ == '__main__':
