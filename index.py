@@ -380,21 +380,7 @@ def convertIPtoAddress():
 #     f.write(json_data)
     
 import pandas as pd
-@app.route("/exportProducts", methods=["GET"])
-def exportProducts():
-    try:
-        products = db['products']
-        all_products = products.find({})
-        df = pd.DataFrame(all_products)
-        df.to_excel('output.xlsx', index=False)
-        save_path = '/var/www/html/tss_files/All_Files/products_list.xlsx'
-        df.to_excel(save_path, index=False)
-        if os.path.exists(save_path):
-            return send_file(save_path, as_attachment=True)
-        else:
-            return "File could not be found at: {}".format(save_path)
-    except Exception as e:
-        return json.dumps({'success': False, "error": e}), 200, {'ContentType': 'application/json'}
+
     
 @app.route("/exportProducts", methods=["GET"])
 def exportProducts():
