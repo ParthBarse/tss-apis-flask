@@ -438,14 +438,20 @@ def importProducts():
             for idx, row in df.iterrows():
                 record = {}
                 for col, value in row.items():
-                    if isinstance(col, str):  # Ensure the column name is a string
-                        keys = col.split('_')
-                        temp = record
-                        for key in keys[:-1]:
-                            if key not in temp:
-                                temp[key] = {}
-                            temp = temp[key]
-                        temp[keys[-1]] = value
+                    try:
+                        if isinstance(col, str):  # Ensure the column name is a string
+                            keys = col.split('_')
+                            temp = record
+                            for key in keys[:-1]:
+                                if key not in temp:
+                                    temp[key] = {}
+                                temp = temp[key]
+                            temp[keys[-1]] = value
+                    except Exception as e:
+                        print("Error occurred:", e)
+                        print("Column name:", col)
+                        print("Row:", row)
+                        print("Record:", record)
                 records.append(record)
             
             products.insert_many(records)
