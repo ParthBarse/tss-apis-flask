@@ -4,4 +4,5 @@ flask-login
 flask-cors
 pymongo
 PyJWT
+geoip2
 pandas
