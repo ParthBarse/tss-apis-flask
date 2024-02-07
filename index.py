@@ -382,14 +382,48 @@ def convertIPtoAddress():
 import pandas as pd
 
     
+# @app.route("/exportProducts", methods=["GET"])
+# def exportProducts():
+#     try:
+#         products = db['products']
+#         all_products = products.find({},{"_id":0})
+        
+#         # Flatten nested structures
+#         all_products_flat = []
+#         for product in all_products:
+#             flat_product = {}
+#             for key, value in product.items():
+#                 if isinstance(value, dict):
+#                     for k, v in value.items():
+#                         flat_product[f"{key}_{k}"] = v
+#                 elif isinstance(value, list):
+#                     for i, item in enumerate(value):
+#                         for k, v in item.items():
+#                             flat_product[f"{key}_{i}_{k}"] = v
+#                 else:
+#                     flat_product[key] = value
+#             all_products_flat.append(flat_product)
+        
+#         df = pd.DataFrame(all_products_flat)
+#         save_path = '/var/www/html/tss_files/All_Files/products_list.xlsx'
+#         df.to_excel(save_path, index=False)
+        
+#         if os.path.exists(save_path):
+#             return send_file(save_path, as_attachment=True)
+#         else:
+#             return "File could not be found at: {}".format(save_path)
+#     except Exception as e:
+#         return json.dumps({'success': False, "error": str(e)}), 200, {'ContentType': 'application/json'}
+
+
 @app.route("/exportProducts", methods=["GET"])
 def exportProducts():
     try:
         products = db['products']
-        all_products = products.find({},{"_id":0})
+        all_products = products.find({})
         
         # Flatten nested structures
-        all_products_flat = []
+        flat_products = []
         for product in all_products:
             flat_product = {}
             for key, value in product.items():
@@ -398,14 +432,17 @@ def exportProducts():
                         flat_product[f"{key}_{k}"] = v
                 elif isinstance(value, list):
                     for i, item in enumerate(value):
-                        for k, v in item.items():
-                            flat_product[f"{key}_{i}_{k}"] = v
+                        if isinstance(item, dict):
+                            for k, v in item.items():
+                                flat_product[f"{key}_{i}_{k}"] = v
+                        else:
+                            flat_product[f"{key}_{i}"] = item
                 else:
                     flat_product[key] = value
-            all_products_flat.append(flat_product)
+            flat_products.append(flat_product)
         
-        df = pd.DataFrame(all_products_flat)
-        save_path = '/var/www/html/tss_files/All_Files/products_list.xlsx'
+        df = pd.DataFrame(flat_products)
+        save_path = 'exported_products.xlsx'
         df.to_excel(save_path, index=False)
         
         if os.path.exists(save_path):
@@ -414,8 +451,7 @@ def exportProducts():
             return "File could not be found at: {}".format(save_path)
     except Exception as e:
         return json.dumps({'success': False, "error": str(e)}), 200, {'ContentType': 'application/json'}
-
-
+    
 
 
 @app.route("/importProducts", methods=["POST"])
@@ -438,20 +474,14 @@ def importProducts():
             for idx, row in df.iterrows():
                 record = {}
                 for col, value in row.items():
-                    try:
-                        if isinstance(col, str):  # Ensure the column name is a string
-                            keys = col.split('_')
-                            temp = record
-                            for key in keys[:-1]:
-                                if key not in temp:
-                                    temp[key] = {}
-                                temp = temp[key]
-                            temp[keys[-1]] = value
-                    except Exception as e:
-                        print("Error occurred:", e)
-                        print("Column name:", col)
-                        print("Row:", row)
-                        print("Record:", record)
+                    if isinstance(col, str):  # Ensure the column name is a string
+                        keys = col.split('_')
+                        temp = record
+                        for key in keys[:-1]:
+                            if key not in temp:
+                                temp[key] = {}
+                            temp = temp[key]
+                        temp[keys[-1]] = value
                 records.append(record)
             
             products.insert_many(records)
@@ -460,6 +490,7 @@ def importProducts():
             return "File format not supported. Please upload an Excel file (.xlsx)"
     except Exception as e:
         return jsonify({'success': False, "error": str(e)}), 200
+
 
 
 if __name__ == '__main__':
